@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- App theme -->
+    <style name="Theme.MMCMSpotFinder" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">#1769E0</item>
+        <item name="android:statusBarColor">?attr/colorPrimary</item>
+        <item name="android:navigationBarColor">#FFFFFF</item>
+    </style>
+
+    <!-- Splash theme (fallback for < Android 12; same name used on 12+) -->
+    <style name="Theme.MMCMSpotFinder.Splash" parent="Theme.SplashScreen">
+        <!-- Background while splash is showing -->
+        <item name="windowSplashScreenBackground">#F6F4F8</item>
+        <!-- Replace with your logo drawable/vector if you have one -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/spotfinder_logo</item>
+        <item name="windowSplashScreenAnimationDuration">400</item>
+        <!-- MUST match the app theme name above exactly -->
+        <item name="postSplashScreenTheme">@style/Theme.MMCMSpotFinder</item>
+    </style>
+
+</resources>
