@@ -26,7 +26,7 @@ import kotlinx.coroutines.delay
 fun SplashScreen(onFinished: () -> Unit) {
     // Simulate quick init work (fetch config, warm cache, etc.)
     LaunchedEffect(Unit) {
-        delay(10000) // adjust or replace with real init
+        delay(400) // adjust or replace with real init
         onFinished()
     }
 
@@ -54,12 +54,12 @@ fun SplashScreen(onFinished: () -> Unit) {
         ) {
             // If you have these files, they’ll show; otherwise remove or rename.
             Image(
-                modifier = Modifier.size(70.dp),
+                modifier = Modifier.size(50.dp),
                 painter = painterResource(id = R.drawable.mmcm_logo),
                 contentDescription = "MMCM logo"
             )
             Image(
-                modifier = Modifier.size(70.dp),
+                modifier = Modifier.size(50.dp),
                 painter = painterResource(id = R.drawable.icpep_logo),
                 contentDescription = "ICpEP logo"
             )
