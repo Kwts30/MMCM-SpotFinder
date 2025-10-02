@@ -16,6 +16,6 @@ fun HomeScreen() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("Home", style = MaterialTheme.typography.headlineSmall)
-        Text("Today's Forecast: 50% (demo)")
+        Text("DEMO NG INA MO!!!!!!!!!!!!")
     }
 }
