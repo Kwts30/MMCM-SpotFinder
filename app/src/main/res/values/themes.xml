@@ -1,21 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- App theme -->
+    <!-- App theme (light) -->
     <style name="Theme.MMCMSpotFinder" parent="Theme.Material3.Light.NoActionBar">
+        <!-- Brand colors -->
         <item name="colorPrimary">#1769E0</item>
-        <item name="android:statusBarColor">?attr/colorPrimary</item>
-        <item name="android:navigationBarColor">#FFFFFF</item>
+
+        <!-- System bars on light background -->
+        <item name="android:statusBarColor">#FFFFFFFF</item> <!-- or @android:color/transparent if using edge-to-edge -->
+        <item name="android:windowLightStatusBar">true</item> <!-- makes status bar icons dark -->
+
+        <item name="android:navigationBarColor">#FFFFFFFF</item>
+        <item name="android:windowLightNavigationBar">true</item> <!-- makes nav bar icons dark -->
     </style>
 
-    <!-- Splash theme (fallback for < Android 12; same name used on 12+) -->
+    <!-- Splash theme (system-managed splash screen) -->
     <style name="Theme.MMCMSpotFinder.Splash" parent="Theme.SplashScreen">
-        <!-- Background while splash is showing -->
+        <!-- Your splash background and centered logo -->
         <item name="windowSplashScreenBackground">#F6F4F8</item>
-        <!-- Replace with your logo drawable/vector if you have one -->
-        <item name="windowSplashScreenAnimatedIcon">@drawable/spotfinder_logo</item>
-        <item name="windowSplashScreenAnimationDuration">400</item>
-        <!-- MUST match the app theme name above exactly -->
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/spotfindericon</item>
+        <item name="windowSplashScreenAnimationDuration">300</item>
+
+        <!-- Make status bar/nav bar icons dark during splash, too -->
+        <item name="android:statusBarColor">#F6F4F8</item>
+        <item name="android:windowLightStatusBar">true</item>
+
+        <item name="android:navigationBarColor">#FFFFFFFF</item>
+        <item name="android:windowLightNavigationBar">true</item>
+
+        <!-- After splash, switch to the app theme -->
         <item name="postSplashScreenTheme">@style/Theme.MMCMSpotFinder</item>
     </style>
 

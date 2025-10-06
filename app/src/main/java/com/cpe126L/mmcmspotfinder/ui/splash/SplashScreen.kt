@@ -26,7 +26,7 @@ import kotlinx.coroutines.delay
 fun SplashScreen(onFinished: () -> Unit) {
     // Simulate quick init work (fetch config, warm cache, etc.)
     LaunchedEffect(Unit) {
-        delay(800) // adjust or replace with real init
+        delay(1500) // adjust or replace with real init
         onFinished()
     }
 

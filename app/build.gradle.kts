@@ -43,12 +43,10 @@ android {
 }
 
 dependencies {
-    // Compose BOM to align Compose versions
     val composeBom = platform("androidx.compose:compose-bom:2024.10.01")
     implementation(composeBom)
     androidTestImplementation(composeBom)
 
-    // Core + Compose
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-compose:1.9.2")
     implementation("androidx.compose.ui:ui")
@@ -57,14 +55,16 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.8.2")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
 
-    // Android 12+ system splash (with back-compat for older versions)
+    // System splash
     implementation("androidx.core:core-splashscreen:1.0.1")
 
-    // ADD THESE to fix XML themes (Theme.Material3.*) usage in themes.xml
+    // Material Components for XML themes (Theme.Material3.*)
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
 
-    // Debug tooling
+    // OpenStreetMap (osmdroid)
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
+
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
