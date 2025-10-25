@@ -15,7 +15,6 @@
         android:roundIcon="@mipmap/spotfindericon_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MMCMSpotFinder">
-
         <!-- Launcher activity uses the Splash theme -->
         <activity
             android:name=".MainActivity"

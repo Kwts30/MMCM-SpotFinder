@@ -152,7 +152,7 @@ fun MapScreen() {
                 Image(
                     painter = painterResource(R.drawable.spotfinder_logowname),
                     contentDescription = "Loading map…",
-                    modifier = Modifier.size(200.dp)
+                    modifier = Modifier.size(350.dp)
                 )
             }
         }
