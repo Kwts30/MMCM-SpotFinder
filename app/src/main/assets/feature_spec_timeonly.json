@@ -1,0 +1,33 @@
+{
+  "model_type": "timeonly_regression_v1",
+  "numeric_feature_order": [
+    "hour_sin",
+    "hour_cos",
+    "is_am",
+    "dow_0",
+    "dow_1",
+    "dow_2",
+    "dow_3",
+    "dow_4",
+    "dow_5"
+  ],
+  "input_shape": [
+    1,
+    9
+  ],
+  "freq_minutes": 10,
+  "allowed_weekdays": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "fixed_error_mae_pp": 7.302063941955566,
+  "fixed_error_band90_pp": 13.901357841491699,
+  "training_window": {
+    "start": "2018-01-01 07:00:00",
+    "end": "2025-12-31 20:00:00"
+  }
+}
