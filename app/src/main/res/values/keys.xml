@@ -1,0 +1,4 @@
+<resources>
+    <!-- Replace with your Geoapify key to enable traffic overlay; leave as is to disable traffic -->
+    <string name="geoapify_key">YOUR_GEOAPIFY_KEY</string>
+</resources>
