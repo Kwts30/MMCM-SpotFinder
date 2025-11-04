@@ -12,46 +12,49 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.alpha // <-- add this import
 import com.cpe126L.mmcmspotfinder.R
 import kotlinx.coroutines.delay
 
-// ==================== Tuning knobs (edit these) ====================
+// ========= Size/opacity controls (edit these to adjust UI quickly) =========
 private val TOP_LOGO_SIZE: Dp = 70.dp        // top logos (box size height/width)
-private val TOP_LOGO_GAP: Dp = 16.dp         // gap around vertical divider
-private val DIVIDER_HEIGHT: Dp = 50.dp       // divider height between the logos
+private val TOP_LOGO_GAP: Dp = 16.dp         // gap between logos and divider
+private val DIVIDER_HEIGHT: Dp = 60.dp       // divider height between the logos
 
 private val CENTER_LOGO_WIDTH: Dp = 500.dp   // main SpotFinder logo width
 private val CENTER_LOGO_HEIGHT: Dp = 500.dp  // main SpotFinder logo height
 private val CENTER_LOGO_Y_OFFSET: Dp = 0.dp  // positive moves DOWN, negative moves UP
 
-private val BUILDING_HEIGHT: Dp = 400.dp     // bottom building image height (bigger number -> taller)
-// ==================================================================
+private val BUILDING_HEIGHT: Dp = 400.dp     // bottom building image height
+private const val BUILDING_OPACITY: Float = 0.70f // 0f..1f (lower = more transparent)
+// ==========================================================================
 
 @Composable
 fun SplashScreen(onFinished: () -> Unit) {
     LaunchedEffect(Unit) {
-        delay(1500) // change to your real init time
+        delay(1500) // replace with real init if needed
         onFinished()
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF3EDF7)) // match your light background
+            .background(Color(0xFFF3EDF7))
     ) {
-        // Bottom layer: building (edge-to-edge)
+        // Bottom layer: building (edge-to-edge) with adjustable opacity
         Image(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .height(BUILDING_HEIGHT),
+                .height(BUILDING_HEIGHT)
+                .alpha(BUILDING_OPACITY), // <-- opacity applied here
             painter = painterResource(id = R.drawable.mmcm_build),
             contentDescription = "MMCM building",
             contentScale = ContentScale.Crop,
             alignment = Alignment.BottomCenter
         )
 
-        // Foreground layout with paddings for safe areas
+        // Foreground content
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -61,21 +64,15 @@ fun SplashScreen(onFinished: () -> Unit) {
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Top: two logos centered with divider
             Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // MMCM logo
                 Image(
-                    modifier = Modifier
-                        .width(TOP_LOGO_SIZE)
-                        .height(TOP_LOGO_SIZE),
+                    modifier = Modifier.size(TOP_LOGO_SIZE),
                     painter = painterResource(id = R.drawable.mmcm_logo),
                     contentDescription = "MMCM logo",
-                    // Use FillHeight so the artwork fills the box even if the PNG has transparent padding
                     contentScale = ContentScale.FillHeight
                 )
                 Spacer(Modifier.width(TOP_LOGO_GAP))
@@ -86,26 +83,19 @@ fun SplashScreen(onFinished: () -> Unit) {
                         .background(Color(0x33000000))
                 )
                 Spacer(Modifier.width(TOP_LOGO_GAP))
-                // ICpEP logo
                 Image(
-                    modifier = Modifier
-                        .width(TOP_LOGO_SIZE)
-                        .height(TOP_LOGO_SIZE),
+                    modifier = Modifier.size(TOP_LOGO_SIZE),
                     painter = painterResource(id = R.drawable.icpep_logo),
                     contentDescription = "ICpEP logo",
                     contentScale = ContentScale.FillHeight
                 )
             }
 
-            // Middle spacer (the center logo is layered below using Box scope)
             Spacer(Modifier.height(8.dp))
-
-            // Bottom spacer keeps Column's SpaceBetween structure clean;
-            // the building image is drawn in the Box background layer.
             Spacer(Modifier.height(8.dp))
         }
 
-        // Center: app logo/wordmark, independently positioned so size changes are obvious
+        // Center logo layered independently so size changes are obvious
         Image(
             modifier = Modifier
                 .align(Alignment.Center)

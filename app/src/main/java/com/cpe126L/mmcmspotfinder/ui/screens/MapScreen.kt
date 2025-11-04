@@ -10,14 +10,12 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,24 +29,28 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.cpe126L.mmcmspotfinder.R
 import kotlinx.coroutines.delay
 import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.MapTileProviderBasic
+import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
+import org.osmdroid.util.MapTileIndex
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.TilesOverlay
 
 /**
- * Full-screen OpenStreetMap (osmdroid), centered on MMCM (Davao),
- * with a logo loading overlay that stays for a minimum time (aesthetic latency),
- * hides on first tile load, and fades out smoothly.
+ * OSM (osmdroid) base map + optional TomTom Traffic Flow overlay (transparent raster).
+ * - Keeps your loading logo and lifecycle handling.
+ * - Traffic is togglable from the UI.
  */
 @Composable
 fun MapScreen() {
     val context = LocalContext.current
 
     // MMCM verified coordinates
-    val MMCM_LAT = 7.063972
-    val MMCM_LON = 125.595690
-    val START_ZOOM = 19.5
+    val MMCM_LAT = 7.063534
+    val MMCM_LON = 125.595635
+    val START_ZOOM = 20.0
 
     // Aesthetic loading timings
     val MIN_SHOW_MS = 500L      // keep logo at least this long
@@ -62,11 +64,15 @@ fun MapScreen() {
     val minTimerDone = remember { mutableStateOf(false) }
     val isLoading = remember { mutableStateOf(true) }
 
+    // Read TomTom key; if placeholder/blank, overlay is disabled
+    val tomtomKey = remember { runCatching { context.getString(R.string.tomtom_key) }.getOrNull().orEmpty() }
+    var trafficOn by remember { mutableStateOf(true) } // default on
+
     // Single MapView instance
     val mapView = remember {
         MapView(context).apply {
             id = View.generateViewId()
-            setTileSource(TileSourceFactory.MAPNIK)
+            setTileSource(TileSourceFactory.MAPNIK) // OSM base
             setMultiTouchControls(true)
             zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
 
@@ -76,22 +82,43 @@ fun MapScreen() {
         }
     }
 
-    // Hide loader on first tile completion
+    // Create TomTom traffic overlay (transparent tiles)
+    val trafficOverlay = remember(tomtomKey) {
+        if (tomtomKey.isNotBlank() && tomtomKey != "YOUR_TOMTOM_KEY") {
+            createTomTomTrafficOverlay(context, tomtomKey, palette = "relative0")
+        } else {
+            null
+        }
+    }
+
+    // Attach/detach overlay when toggled or when overlay available
+    DisposableEffect(trafficOn, trafficOverlay, mapView) {
+        if (trafficOn && trafficOverlay != null) {
+            if (!mapView.overlays.contains(trafficOverlay)) {
+                mapView.overlays.add(trafficOverlay) // on top of base
+            }
+            mapView.invalidate()
+        } else {
+            if (trafficOverlay != null && mapView.overlays.contains(trafficOverlay)) {
+                mapView.overlays.remove(trafficOverlay)
+                mapView.invalidate()
+            }
+        }
+        onDispose { /* no-op; lifecycle block handles pause/resume */ }
+    }
+
+    // Hide loader on first base tile load (OSM)
     DisposableEffect(mapView) {
         val handler = object : Handler(Looper.getMainLooper()) {
             override fun handleMessage(msg: Message) {
                 if (!firstTileLoaded.value) {
                     firstTileLoaded.value = true
                 }
-                // remove after first signal
                 mapView.tileProvider.tileRequestCompleteHandlers.remove(this)
             }
         }
         mapView.tileProvider.tileRequestCompleteHandlers.add(handler)
-
-        onDispose {
-            mapView.tileProvider.tileRequestCompleteHandlers.remove(handler)
-        }
+        onDispose { mapView.tileProvider.tileRequestCompleteHandlers.remove(handler) }
     }
 
     // Lifecycle management for MapView
@@ -117,7 +144,7 @@ fun MapScreen() {
         minTimerDone.value = true
     }
 
-    // Close loader as soon as both: min time elapsed AND first tile loaded
+    // Close loader as soon as both: min time elapsed AND first base tile loaded
     LaunchedEffect(firstTileLoaded.value, minTimerDone.value) {
         if (firstTileLoaded.value && minTimerDone.value) {
             isLoading.value = false
@@ -136,17 +163,16 @@ fun MapScreen() {
             factory = { mapView },
             modifier = Modifier.fillMaxSize()
         )
-
         // Loading overlay with fade-out when it finishes
         AnimatedVisibility(
             visible = isLoading.value,
-            enter = EnterTransition.None,                 // no fade-in; only fade-out when done
-            exit = fadeOut(animationSpec = tween(500))    // fade-out on finish
+            enter = EnterTransition.None,
+            exit = fadeOut(animationSpec = tween(500))
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFF6F4F8)), // match your splash bg
+                    .background(Color(0xFFF6F4F8)),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
@@ -156,5 +182,36 @@ fun MapScreen() {
                 )
             }
         }
+    }
+}
+
+/**
+ * Builds a TilesOverlay using TomTom Traffic Flow raster tiles.
+ * palette: "relative0".."relative3" change the color scheme.
+ */
+private fun createTomTomTrafficOverlay(
+    context: android.content.Context,
+    apiKey: String,
+    palette: String = "relative0"
+): TilesOverlay {
+    val src = object : OnlineTileSourceBase(
+        "TomTomTraffic",
+        0, 20, 256, ".png",
+        arrayOf("https://api.tomtom.com/")
+    ) {
+        override fun getTileURLString(index: Long): String {
+            val z = MapTileIndex.getZoom(index)
+            val x = MapTileIndex.getX(index)
+            val y = MapTileIndex.getY(index)
+            return "https://api.tomtom.com/traffic/map/4/tile/flow/$palette/$z/$x/$y.png?key=$apiKey"
+        }
+    }
+    val provider = MapTileProviderBasic(context, src).apply {
+        setUseDataConnection(true)
+    }
+    return TilesOverlay(provider, context).apply {
+        // Make loading placeholders invisible; traffic tiles themselves are transparent overlays.
+        setLoadingBackgroundColor(android.graphics.Color.TRANSPARENT)
+        setLoadingLineColor(android.graphics.Color.TRANSPARENT)
     }
 }

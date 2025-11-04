@@ -10,12 +10,16 @@ import androidx.compose.material.icons.outlined.QueryStats
 import androidx.compose.material.icons.outlined.Room
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.cpe126L.mmcmspotfinder.ml.TimeOnlyPredictor
 import com.cpe126L.mmcmspotfinder.ui.components.PillBottomBar
 import com.cpe126L.mmcmspotfinder.ui.components.PillTab
 import com.cpe126L.mmcmspotfinder.ui.screens.ForecastScreen
@@ -23,6 +27,8 @@ import com.cpe126L.mmcmspotfinder.ui.screens.HomeScreen
 import com.cpe126L.mmcmspotfinder.ui.screens.MapScreen
 import com.cpe126L.mmcmspotfinder.ui.screens.MenuScreen
 import com.cpe126L.mmcmspotfinder.ui.splash.SplashScreen
+import com.cpe126L.mmcmspotfinder.viewmodel.HomeViewModel
+import java.time.ZoneId
 
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
@@ -36,6 +42,18 @@ sealed class Screen(val route: String) {
 @Suppress("UnusedMaterial3ScaffoldPaddingParameter")
 fun AppNav() {
     val navController = rememberNavController()
+    val context = LocalContext.current
+
+    // Predictor singleton
+    val predictor = remember { TimeOnlyPredictor(context) }
+    // Force PH timezone so “open/closed” logic matches your location
+    val manilaZone = remember { ZoneId.of("Asia/Manila") }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            // predictor.close() // if needed
+        }
+    }
 
     val tabs = listOf(
         PillTab(Screen.Home.route, "Home", Icons.Outlined.Home),
@@ -54,9 +72,9 @@ fun AppNav() {
                 PillBottomBar(
                     currentRoute = currentRoute,
                     tabs = tabs,
-                    menuActive = menuActive, // hides blue highlight when Menu is open
+                    menuActive = menuActive,
                     onSelectTab = { route ->
-                        if (menuActive) navController.popBackStack() // close Menu first
+                        if (menuActive) navController.popBackStack()
                         navController.navigate(route) {
                             launchSingleTop = true
                             restoreState = true
@@ -99,8 +117,13 @@ fun AppNav() {
                 exitTransition = { ExitTransition.None },
                 popEnterTransition = { EnterTransition.None },
                 popExitTransition = { ExitTransition.None }
-            ) { HomeScreen() }
-
+            ) {
+                HomeScreen(
+                    predictor = predictor,
+                    onViewMap = { navController.navigate(Screen.Map.route) },
+                    zone = manilaZone
+                )
+            }
             composable(
                 route = Screen.Map.route,
                 enterTransition = { EnterTransition.None },
@@ -108,7 +131,6 @@ fun AppNav() {
                 popEnterTransition = { EnterTransition.None },
                 popExitTransition = { ExitTransition.None }
             ) { MapScreen() }
-
             composable(
                 route = Screen.Forecast.route,
                 enterTransition = { EnterTransition.None },
@@ -116,7 +138,6 @@ fun AppNav() {
                 popEnterTransition = { EnterTransition.None },
                 popExitTransition = { ExitTransition.None }
             ) { ForecastScreen() }
-
             composable(
                 route = Screen.Menu.route,
                 enterTransition = { EnterTransition.None },

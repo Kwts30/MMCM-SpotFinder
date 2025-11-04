@@ -74,6 +74,16 @@ dependencies {
     // Optional delegates (uncomment if you decide to use them later):
     // implementation("org.tensorflow:tensorflow-lite-gpu:2.14.0")
     // implementation("org.tensorflow:tensorflow-lite-select-tf-ops:2.14.0")
+    implementation("org.maplibre.gl:android-sdk:11.5.0")
+
+    // Compose BOM is recommended; versions shown if you’re not using BOM:
+    implementation("androidx.compose.material:material-icons-extended:1.7.5")
+    // Pager is in foundation (if using BOM this is already covered)
+    implementation("androidx.compose.foundation:foundation:1.7.5")
+
+        implementation("androidx.compose.foundation:foundation") // HorizontalPager in foundation.pager
+        implementation("androidx.compose.material:material-icons-extended")
+        implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

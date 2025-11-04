@@ -96,8 +96,6 @@ fun ForecastScreen() {
             }
         }) { Text("Predict") }
 
-        Divider()
-
         if (inputError != null) {
             Text(inputError!!, color = MaterialTheme.colorScheme.error)
         }
