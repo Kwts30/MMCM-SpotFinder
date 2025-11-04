@@ -1,4 +1,6 @@
 <resources>
-    <!-- Replace with your Geoapify key to enable traffic overlay; leave as is to disable traffic -->
-    <string name="geoapify_key">YOUR_GEOAPIFY_KEY</string>
+    <!-- Replace with your real TomTom key from developer.tomtom.com -->
+    <string name="tomtom_key">aMesFF6AF80W2ocBNTCVuK0sJ5RGnz14</string>
+
+    <!-- You can keep your existing entries here, including base_style_url shown above -->
 </resources>
