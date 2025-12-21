@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.cpe126L.mmcmspotfinder.ml.TimeOnlyPredictor
+import com.cpe126L.mmcmspotfinder.util.CLOSE_HOUR
+import com.cpe126L.mmcmspotfinder.util.OPEN_HOUR
+import com.cpe126L.mmcmspotfinder.util.classifyOccupancy
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,8 +15,6 @@ import kotlinx.coroutines.launch
 import java.time.*
 
 private const val FREQ_MIN = 10
-private const val OPEN_HOUR = 6      // 6:00 AM
-private const val CLOSE_HOUR = 19    // 7:00 PM (exclusive)
 
 enum class OccClass { Low, Moderate, High, Closed }
 
@@ -63,11 +64,11 @@ class HomeViewModel(
     private fun recomputeAll(slot: ZonedDateTime) {
         val (open, mode) = resolveOpenClose(slot)
         val currentPercent = if (open) predictPercent(slot) else null
-        val currentClass = classify(currentPercent)
+        val currentClass = classifyOccupancy(currentPercent)
 
         val (nextHourAvg, nextHourClass) = if (open) {
             val avg = averageNextHour(slot)
-            avg to classify(avg)
+            avg to classifyOccupancy(avg)
         } else (null to OccClass.Closed)
 
         val peakLabel = computeOrGetPeakHour(slot)
@@ -151,15 +152,6 @@ class HomeViewModel(
 
         lastPeakDay = today
         return if (bestHour >= 0) formatHour(bestHour) else "--:--"
-    }
-
-    private fun classify(p: Int?): OccClass {
-        val v = p ?: return OccClass.Closed
-        return when {
-            v < 40 -> OccClass.Low
-            v < 70 -> OccClass.Moderate
-            else -> OccClass.High
-        }
     }
 
     private fun buildRecommendation(c: OccClass): String = when (c) {

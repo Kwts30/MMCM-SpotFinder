@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">MMCM Spotfinder</string>
+    <string name="widget_description">Shows current MMCM campus occupancy prediction</string>
 </resources>
