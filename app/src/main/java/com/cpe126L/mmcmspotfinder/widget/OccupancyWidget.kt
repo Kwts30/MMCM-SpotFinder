@@ -12,6 +12,9 @@ import androidx.work.WorkManager
 import com.cpe126L.mmcmspotfinder.MainActivity
 import com.cpe126L.mmcmspotfinder.R
 import com.cpe126L.mmcmspotfinder.ml.TimeOnlyPredictor
+import com.cpe126L.mmcmspotfinder.util.CLOSE_HOUR
+import com.cpe126L.mmcmspotfinder.util.OPEN_HOUR
+import com.cpe126L.mmcmspotfinder.util.classifyOccupancy
 import com.cpe126L.mmcmspotfinder.viewmodel.OccClass
 import java.time.*
 import java.time.format.DateTimeFormatter
@@ -58,26 +61,32 @@ internal fun updateAppWidget(
     val views = RemoteViews(context.packageName, R.layout.widget_occupancy)
 
     // Get current prediction
+    // Note: Creating a new predictor instance is necessary as widgets run in a separate process
+    // The TensorFlow Lite model is loaded on-demand and managed by the TF Lite runtime
     val predictor = TimeOnlyPredictor(context)
-    val zone = ZoneId.of("Asia/Manila")
-    val now = ZonedDateTime.now(zone)
-    
-    val (isOpen, currentPercent, occupancyClass) = getCurrentOccupancy(predictor, now)
-    
-    // Update widget UI
-    if (isOpen && currentPercent != null) {
-        views.setTextViewText(R.id.widget_occupancy_percent, "${currentPercent}%")
-        views.setTextViewText(R.id.widget_status, getStatusText(occupancyClass))
-        views.setInt(R.id.widget_status, "setBackgroundColor", getStatusColor(occupancyClass))
-    } else {
-        views.setTextViewText(R.id.widget_occupancy_percent, "--")
-        views.setTextViewText(R.id.widget_status, "Closed")
-        views.setInt(R.id.widget_status, "setBackgroundColor", 0xFF666666.toInt())
+    try {
+        val zone = ZoneId.of("Asia/Manila")
+        val now = ZonedDateTime.now(zone)
+        
+        val (isOpen, currentPercent, occupancyClass) = getCurrentOccupancy(predictor, now)
+        
+        // Update widget UI
+        if (isOpen && currentPercent != null) {
+            views.setTextViewText(R.id.widget_occupancy_percent, "${currentPercent}%")
+            views.setTextViewText(R.id.widget_status, getStatusText(occupancyClass))
+            views.setInt(R.id.widget_status, "setBackgroundColor", getStatusColor(occupancyClass))
+        } else {
+            views.setTextViewText(R.id.widget_occupancy_percent, "--")
+            views.setTextViewText(R.id.widget_status, "Closed")
+            views.setInt(R.id.widget_status, "setBackgroundColor", 0xFF666666.toInt())
+        }
+        
+        // Set last update time
+        val timeFmt = DateTimeFormatter.ofPattern("h:mm a")
+        views.setTextViewText(R.id.widget_last_update, "Updated: ${now.format(timeFmt)}")
+    } finally {
+        predictor.close()
     }
-    
-    // Set last update time
-    val timeFmt = DateTimeFormatter.ofPattern("h:mm a")
-    views.setTextViewText(R.id.widget_last_update, "Updated: ${now.format(timeFmt)}")
 
     // Create intent to open the app when widget is tapped
     val intent = Intent(context, MainActivity::class.java)
@@ -97,9 +106,6 @@ private fun getCurrentOccupancy(
     predictor: TimeOnlyPredictor,
     time: ZonedDateTime
 ): Triple<Boolean, Int?, OccClass> {
-    val OPEN_HOUR = 6
-    val CLOSE_HOUR = 19
-    
     // Check if campus is open
     if (time.dayOfWeek == DayOfWeek.SUNDAY) {
         return Triple(false, null, OccClass.Closed)
@@ -124,11 +130,7 @@ private fun getCurrentOccupancy(
     val result = predictor.predict(weekdayIdx, time.hour, time.minute)
     val percent = result.percent.coerceIn(0f, 100f).toInt()
     
-    val occupancyClass = when {
-        percent < 40 -> OccClass.Low
-        percent < 70 -> OccClass.Moderate
-        else -> OccClass.High
-    }
+    val occupancyClass = classifyOccupancy(percent)
     
     return Triple(true, percent, occupancyClass)
 }
