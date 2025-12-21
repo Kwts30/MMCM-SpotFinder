@@ -6,12 +6,16 @@ import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.cpe126L.mmcmspotfinder.MainActivity
 import com.cpe126L.mmcmspotfinder.R
 import com.cpe126L.mmcmspotfinder.ml.TimeOnlyPredictor
 import com.cpe126L.mmcmspotfinder.viewmodel.OccClass
 import java.time.*
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.TimeUnit
 
 class OccupancyWidget : AppWidgetProvider() {
     override fun onUpdate(
@@ -27,10 +31,22 @@ class OccupancyWidget : AppWidgetProvider() {
 
     override fun onEnabled(context: Context) {
         // Called when the first widget is created
+        // Schedule periodic updates using WorkManager
+        val updateRequest = PeriodicWorkRequestBuilder<WidgetUpdateWorker>(
+            15, TimeUnit.MINUTES // Minimum interval for periodic work
+        ).build()
+
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            "widget_update_work",
+            ExistingPeriodicWorkPolicy.KEEP,
+            updateRequest
+        )
     }
 
     override fun onDisabled(context: Context) {
         // Called when the last widget is removed
+        // Cancel the periodic work
+        WorkManager.getInstance(context).cancelUniqueWork("widget_update_work")
     }
 }
 
