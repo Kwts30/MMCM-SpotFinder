@@ -61,8 +61,9 @@ internal fun updateAppWidget(
     val views = RemoteViews(context.packageName, R.layout.widget_occupancy)
 
     // Get current prediction
-    // Note: Creating a new predictor instance is necessary as widgets run in a separate process
-    // The TensorFlow Lite model is loaded on-demand and managed by the TF Lite runtime
+    // Note: Widgets run in a separate process from the main app, so we cannot share
+    // a predictor instance. Creating a new instance per update is necessary.
+    // TensorFlow Lite's Interpreter efficiently handles model loading and caching internally.
     val predictor = TimeOnlyPredictor(context)
     try {
         val zone = ZoneId.of("Asia/Manila")
